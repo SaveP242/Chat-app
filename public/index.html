@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        /* Your CSS styles here */
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+        .chat-container {
+            width: 80%;
+            margin: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #chat-history {
+            margin-bottom: 20px;
+            overflow-y: scroll;
+            max-height: 300px;
+            padding-right: 20px; /* Add padding to prevent scrollbar from covering content */
+        }
+        .chat-message {
+            margin: 5px 0;
+        }
+        .user-message {
+            text-align: right;
+            color: #007bff;
+        }
+        .assistant-message {
+            color: #28a745;
+        }
+        #user-input {
+            width: calc(100% - 70px); /* Adjust input width */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        #user-input:focus {
+            outline: none;
+            border-color: #007bff; /* Change border color on focus */
+        }
+        #submit-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #submit-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <h1>Chat with <span id="receiver"></span></h1>
+    <div id="chat-history"></div>
+    <form id="message-form">
+        <input id="message-input" autocomplete="off" placeholder="Type your message here..." />
+        <button type="submit">Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const receiver = new URLSearchParams(window.location.search).get('receiver');
+        document.getElementById('receiver').textContent = receiver;
+
+        const socket = io();
+        const chatHistoryContainer = document.getElementById('chat-history');
+        let displayedMessages = [];
+
+        socket.on('connect', () => {
+            socket.on('chat history', (history) => {
+                // Clear the chat history container before appending new messages
+                chatHistoryContainer.innerHTML = '';
+
+                displayedMessages = [];
+
+                history.forEach(message => {
+                    const messageKey = `${message.sender}: ${message.message}`;
+                    if (!displayedMessages.includes(messageKey)) {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = `${message.sender}: ${message.message}`;
+                        chatHistoryContainer.appendChild(messageElement);
+                        displayedMessages.push(messageKey);
+                    }
+                });
+            });
+
+            const messageForm = document.getElementById('message-form');
+            const messageInput = document.getElementById('message-input');
+
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const message = messageInput.value;
+                socket.emit('chat message', { message });
+                messageInput.value = '';
+            });
+
+            socket.on('chat message', (data) => {
+                if (!displayedMessages.includes(data._id)) {
+                const messageElement = document.createElement('div');
+                const sender = data.sender ? data.sender : 'Unknown Sender';
+                messageElement.textContent = `${sender}: ${data.message}`;
+                chatHistoryContainer.appendChild(messageElement);
+                displayedMessages.push(data._id);
+                }
+            });
+        });
+    </script>
+    <a href="/login">Back to Login</a>
+</body>
+</html>
